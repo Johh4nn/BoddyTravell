@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "buddytravel-e497e",
+  "private_key_id": "31a05401408287803117125425e289fad9b9e674",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCZk3Lwbj26vScv\ntgWhaXtt6H70t19nZ+H1v31C9uGYllkg8IjH20JlHTA6sDxczAslrPd80vHh3AlO\n7SdJz4lIqBnxzlb5WkcS6d7jgjozcVveUYjvPf+DqgYatzEHdN1iUe7QjoOxDgbn\nAO8MmIfMMLhYTARAYfU8WuoXmSGKQZmY0+d0LNvG3XNwvz1awFTWH+GUNjmrVztK\nexmqQV+febF+Yb7EcERQgv99fvMwi7OxHxnRo/wtLs32L6AjUp/Ze2tYLk8TrZUb\n6vru5WQmggMBoYDPhIIKQ6LdqNuVleqUcBryk17YVqRluiHjaQZ1XqE3Uk3vrwdn\nufhXmTy9AgMBAAECggEABIbND3sgWf2zRvu6z2wi1YrRxc1rLsq9ZUHp+OxP7/Br\n23Bbh7srCidBwakUzmNmkgthbA4c+lxC8KRFe9kgdxdv/v7m9LM4Kb2M8psRs2x2\n7xGWKKm6JfD//GTujrAKH8Nsd5HhHc8yXY1bKRLh2x811RxrJP6o0h5CjMQtseZ7\nXrkM+Nttpzm9HNZ6e8I/I6GZljbsKiNAHJF6bb6j5AOdsAvtLKcbnjVM5hXamHck\nbA1H3/6sE/CZYsbbnMrbQN0uYDENvh2lRLPG6PXIaOYTRluTspGrOHNtSe6BUCYF\nlE1cWwRptZjsabA5sQwdz3vt847SIzilWKf9hLhPwQKBgQDVI3xIpKnoeOdwkDcz\ncgD5hdiAsMIVFOBCYyqoAw70C+n88uohcV0kTbvfg99K97++Zx7JzjPcOzFlQjnI\ndoH3l9m8LJ8Sdh3LXlAxtQ4B39J1uLCh9cMiV8a9Il5TdaXW3baMAu6VvmGplRfx\nVtt+EJz5I0R8yCnB8sbREcgf0QKBgQC4daPR+oeyrT2qAcMD6fnb+GczUsxP6pv1\ncAyXCmg7EqH9TaC2j4OmTudnRKrU7gqdWmK/FF+MlNJAAt7dEROfPMJBH1qtEK1V\nxtTXLR18g8LVdI/w5jVobZ65/ndLNS+urzkNL2udJRgCjZQAwjU+aFMz9p5mupEq\n9JLqNzeVLQKBgQCuKhYYAj45EfsFN0N0TXdQbrfwyP9/XJS4ivJDYmRotgeZRCJf\n+5PB46deyRLA3twXSYqWG2KzVsdRWCGBlp0zZiltJAVEf7JvCX18cNemXnBK9AWa\nAwpWWOW0jY4Iov1GK9xMYuT1BiImAggTlQc853Rt/Qys7p94tdsS4nXm0QKBgAmB\n9smx8iChkVYb9SNUgg52hUs9704HN7a06dE3NhwlX7ggsjH2v8BovMCz52JGSsHF\nkOVsdWhXm2a1PyuB39MLXK/in9ffzi9nqjzVFHoAiKBb+7ddBk+1psLLfPahbS3B\n1lz5nsBg0xX+mixX1kq7Md6xzYRaBXWDWbc81V6ZAoGBAI1374mh66C6Kq9dChT6\nhPZ0ehAO3hLypmK9RB+2Cy/143BS7t97EZgaeURAU92aXBgfBDMElEatTnVlXaZG\nq/j8pEtsXej1pq4aWvXYe/W466wpMKAmZVwFZBDYAOhWFVRAoMTHgqA5gd/Q6ILs\nTpy9vAKA7Ty/8hT8NYXYFx7P\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@buddytravel-e497e.iam.gserviceaccount.com",
+  "client_id": "105501178395650566562",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40buddytravel-e497e.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
