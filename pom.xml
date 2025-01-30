@@ -9,76 +9,76 @@
     <version>1.0-SNAPSHOT</version>
 
     <dependencies>
-        <!-- Firebase Admin SDK -->
+
+            <!-- Firebase Admin SDK -->
         <dependency>
             <groupId>com.google.firebase</groupId>
             <artifactId>firebase-admin</artifactId>
-            <version>9.0.0</version>
-        </dependency>
-        <!-- Dependencia para SLF4J -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.36</version> <!-- Usa la versión compatible con tu proyecto -->
+            <version>9.2.0</version>
         </dependency>
 
-        <!-- Dependencia para Logback -->
+            <!-- Dependencia para SLF4J -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>1.7.36</version>
+            </dependency>
+
+            <!-- Dependencia para Logback (Sistema de Logging) -->
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>1.2.10</version>
+            </dependency>
+
+        <!-- JSON Parser -->
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.2.10</version> <!-- Usa la versión compatible con tu proyecto -->
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20231013</version>
         </dependency>
 
-        <!-- Dependencia para Logback (Logback-core) -->
+        <!-- Dependencia para Firestore -->
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>1.2.10</version>
-        </dependency>
-        <!-- Dependencia para SLF4J -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.36</version> <!-- Usa la versión más actual -->
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-firestore</artifactId>
+            <version>3.9.0</version>
         </dependency>
 
-        <!-- Dependencia para Log4j (SLF4J impl) -->
+        <!-- Dependencia para pruebas unitarias (JUnit) -->
         <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-slf4j-impl</artifactId>
-            <version>2.17.1</version> <!-- Usa la versión más actual -->
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
         </dependency>
 
-        <!-- Dependencia para Log4j API -->
+        <!-- Dependencia para manejo de JSON avanzado (Gson) -->
         <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>2.17.1</version>
-        </dependency>
-
-        <!-- Dependencia para Log4j Core -->
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>2.17.1</version>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
         </dependency>
     </dependencies>
 
-
-
-
     <properties>
-        <!-- Cambié la versión de Java a 17, que es estable y compatible -->
+        <!-- Usando Java 17 para estabilidad -->
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-
-    <!-- Si es necesario agregar el repositorio de Google, lo puedes hacer aquí -->
+    <!-- Repositorio de Google (Opcional, si Firebase lo requiere) -->
     <repositories>
         <repository>
-            <id>google</id>
-            <url>https://maven.google.com/</url>
+            <id>central</id>
+            <url>https://repo1.maven.org/maven2/
+            </url>
         </repository>
     </repositories>
 </project>

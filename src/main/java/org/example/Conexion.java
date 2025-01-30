@@ -1,4 +1,5 @@
 package org.example;
+
 import com.google.cloud.firestore.Firestore;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -14,7 +15,7 @@ public class Conexion {
 
     public static void conectarFirebase() {
         try {
-            FileInputStream sa = new FileInputStream("C:\\Users\\POO\\Documents\\POO\\BoddyTravell\\src\\main\\resources\\buddytravel.json");
+            FileInputStream sa = new FileInputStream("src/main/resources/buddytravel.json");
 
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(sa))
@@ -23,9 +24,9 @@ public class Conexion {
             FirebaseApp.initializeApp(options);
             db = FirestoreClient.getFirestore();
 
-            System.out.println("Éxito al conectar.");
+            System.out.println("✅ Firestore conectado correctamente.");
         } catch (IOException e) {
-            System.err.println("Error: " + e.getMessage());
+            System.err.println("❌ Error al conectar Firestore: " + e.getMessage());
         }
     }
 }

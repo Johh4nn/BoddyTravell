@@ -1,22 +1,14 @@
 package org.example;
 
+import FireBase.AuthService;
+import forms.formLogin;
 
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-
-import java.io.FileInputStream;
-import java.io.IOException;
+import javax.swing.*;
 import java.util.Scanner;
 
 public class Main {
-
     public static void main(String[] args) {
-        Conexion.conectarFirebase();
+        formLogin form = new formLogin();
+        form.ventanaLogin();
     }
 }
-
-
