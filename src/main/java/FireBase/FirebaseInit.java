@@ -1,38 +1,40 @@
 package FireBase;
 
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.firestore.Firestore;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.cloud.FirestoreClient;
+import com.google.cloud.firestore.Firestore;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 
 public class FirebaseInit {
-    private static Firestore db;
+    private static boolean initialized = false;
 
     public static void initialize() {
-        if (FirebaseApp.getApps().isEmpty()) {
+        if (!initialized) {
             try {
-                // Asegúrate de que este archivo existe en src/main/resources/
-                FileInputStream serviceAccount = new FileInputStream("src/main/resources/serviceAccountKey.json");
+                FileInputStream serviceAccount = new FileInputStream("src/main/resources/buddytravel.json");
 
-                FirebaseOptions options = new FirebaseOptions.Builder()
+                FirebaseOptions options = FirebaseOptions.builder()
                         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                        .setDatabaseUrl("https://tu-proyecto.firebaseio.com") // Cambia por la URL de tu Firebase
+                        .setDatabaseUrl("https://<TU_PROYECTO>.firebaseio.com")
                         .build();
 
                 FirebaseApp.initializeApp(options);
-                db = FirestoreClient.getFirestore();
-                System.out.println("🔥 Firebase Firestore inicializado correctamente.");
+                initialized = true;
+                System.out.println("✅ Firebase inicializado correctamente.");
             } catch (IOException e) {
-                System.err.println("❌ Error inicializando Firebase: " + e.getMessage());
+                throw new IllegalStateException("❌ Error al inicializar Firebase: " + e.getMessage(), e);
             }
         }
     }
 
     public static Firestore getFirestore() {
-        return db;
+        return FirestoreClient.getFirestore();
     }
 }
+
+
