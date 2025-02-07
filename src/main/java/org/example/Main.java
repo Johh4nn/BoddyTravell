@@ -1,6 +1,6 @@
 package org.example;
 
-import FireBase.AuthService;
+import FireBase.FirebaseInit;
 import forms.formLogin;
 
 import javax.swing.*;

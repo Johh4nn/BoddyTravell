@@ -6,11 +6,12 @@ import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.WriteResult;
 import com.google.api.core.ApiFuture;
 import org.example.Conexion;
-//
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public class formRegister extends JFrame {
     public JPanel mainRegister;
@@ -33,17 +34,17 @@ public class formRegister extends JFrame {
         db = Conexion.db;
 
         if (db == null) {
-            JOptionPane.showMessageDialog(this, "Error: No se pudo conectar a Firestore.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "❌ Error: No se pudo conectar a Firestore.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         // Panel de fondo
-        BackgroundPanel backgroundPanel = new BackgroundPanel("Imagen/Registro/4e598eced1b51436499f20885c6c18af.jpg");
+        JPanel backgroundPanel = new JPanel();
         backgroundPanel.setLayout(null);
 
         // Título
         JLabel registroLabel = new JLabel("REGISTRO");
-        registroLabel.setForeground(Color.WHITE);
+        registroLabel.setForeground(Color.BLACK);
         registroLabel.setFont(new Font("Consolas", Font.BOLD, 30));
         registroLabel.setBounds(320, 20, 300, 40);
         backgroundPanel.add(registroLabel);
@@ -76,7 +77,7 @@ public class formRegister extends JFrame {
 
         // ComboBox para el rol
         JLabel tipoLabel = new JLabel("Tipo de usuario");
-        tipoLabel.setForeground(Color.WHITE);
+        tipoLabel.setForeground(Color.BLACK);
         tipoLabel.setFont(new Font("Consolas", Font.BOLD, 18));
         tipoLabel.setBounds(50, 360, 200, 30);
         backgroundPanel.add(tipoLabel);
@@ -86,23 +87,39 @@ public class formRegister extends JFrame {
         backgroundPanel.add(comboBox1);
 
         // Botón Enviar
+        // Botón Enviar
         enviarButton = new JButton("Enviar");
         enviarButton.setBounds(350, 450, 100, 30);
-        enviarButton.addActionListener(e -> registrarUsuario());
+        enviarButton.addActionListener(e -> {
+            System.out.println("🔘 Botón 'Enviar' presionado.");
+
+            // Verifica si Firebase está inicializado
+            if (auth == null || db == null) {
+                JOptionPane.showMessageDialog(this, "❌ Error: Firebase no está conectado.", "Error", JOptionPane.ERROR_MESSAGE);
+                System.out.println("❌ Firebase no está conectado.");
+                return;
+            }
+
+            System.out.println("✅ Firebase conectado correctamente. Procediendo con el registro...");
+
+            // Intenta registrar usuario
+            registrarUsuario();
+        });
         backgroundPanel.add(enviarButton);
 
-        setContentPane(backgroundPanel);
     }
 
     private void agregarCampo(String texto, int x, int y, JPanel panel) {
         JLabel label = new JLabel(texto);
-        label.setForeground(Color.WHITE);
+        label.setForeground(Color.BLACK);
         label.setFont(new Font("Consolas", Font.PLAIN, 18));
         label.setBounds(x, y, 200, 30);
         panel.add(label);
     }
 
     private void registrarUsuario() {
+        System.out.println("🔘 Botón 'Enviar' fue presionado.");
+
         String nombre = textField1.getText().trim();
         String apellido = textField2.getText().trim();
         String nombreUsuario = textField3.getText().trim();
@@ -111,18 +128,40 @@ public class formRegister extends JFrame {
         String role = comboBox1.getSelectedItem().toString();
 
         if (nombre.isEmpty() || apellido.isEmpty() || nombreUsuario.isEmpty() || email.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Por favor, complete todos los campos", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "⚠️ Por favor, complete todos los campos", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
+        if (auth == null || db == null) {
+            JOptionPane.showMessageDialog(this, "❌ Firebase no está conectado.", "Error", JOptionPane.ERROR_MESSAGE);
+            System.out.println("❌ Error: Firebase no está conectado.");
+            return;
+        }
+        System.out.println("✅ Firebase conectado correctamente.");
+
         try {
+            System.out.println("🔍 Verificando si el correo ya está registrado...");
+            try {
+                UserRecord existingUser = auth.getUserByEmail(email);
+                if (existingUser != null) {
+                    JOptionPane.showMessageDialog(this, "⚠️ El correo ya está registrado.", "Error", JOptionPane.ERROR_MESSAGE);
+                    System.out.println("⚠️ El correo ya está registrado.");
+                    return;
+                }
+            } catch (Exception ignored) {
+                System.out.println("✔️ El correo no está registrado, continuando...");
+            }
+
+            System.out.println("📝 Creando usuario en Firebase Authentication...");
             UserRecord.CreateRequest request = new UserRecord.CreateRequest()
                     .setEmail(email)
                     .setPassword(password);
 
             UserRecord userRecord = auth.createUser(request);
             String uid = userRecord.getUid();
+            System.out.println("✅ Usuario creado con UID: " + uid);
 
+            System.out.println("📝 Guardando usuario en Firestore...");
             Map<String, Object> userData = new HashMap<>();
             userData.put("nombre", nombre);
             userData.put("apellido", apellido);
@@ -132,13 +171,17 @@ public class formRegister extends JFrame {
 
             ApiFuture<WriteResult> future = db.collection("users").document(uid).set(userData);
             WriteResult result = future.get();
+            System.out.println("✅ Usuario guardado en Firestore en: " + result.getUpdateTime());
 
-            JOptionPane.showMessageDialog(this, "Registro exitoso!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-
+            JOptionPane.showMessageDialog(this, "✅ Registro exitoso!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+        } catch (InterruptedException | ExecutionException e) {
+            JOptionPane.showMessageDialog(this, "❌ Error en Firestore: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            System.out.println("❌ Error en Firestore: " + e.getMessage());
+            e.printStackTrace();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error en el registro: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "❌ Error en Firebase Authentication: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            System.out.println("❌ Error en autenticación: " + e.getMessage());
             e.printStackTrace();
         }
     }
 }
-//
