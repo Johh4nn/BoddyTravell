@@ -10,7 +10,7 @@
 
     <!-- Configuración del root logger -->
     <root level="debug">
-        <appender-ref ref="console" />
+        <appender-ref ref="console"/>
     </root>
 
 </configuration>

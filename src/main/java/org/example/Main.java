@@ -10,6 +10,5 @@ public class Main {
     public static void main(String[] args) {
         formLogin form = new formLogin();
         form.ventanaLogin();
-
     }
 }
