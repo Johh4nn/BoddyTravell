@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class formUser extends JFrame {
 
-    private JPanel mainPanel;
+    public JPanel mainPanel;
     private JTable tablePromociones;
     private JButton btnActualizar;
     private JButton btnSalir;

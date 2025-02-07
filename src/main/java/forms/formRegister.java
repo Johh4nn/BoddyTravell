@@ -87,7 +87,6 @@ public class formRegister extends JFrame {
         backgroundPanel.add(comboBox1);
 
         // Botón Enviar
-        // Botón Enviar
         enviarButton = new JButton("Enviar");
         enviarButton.setBounds(350, 450, 100, 30);
         enviarButton.addActionListener(e -> {
@@ -105,8 +104,13 @@ public class formRegister extends JFrame {
             // Intenta registrar usuario
             registrarUsuario();
         });
+
         backgroundPanel.add(enviarButton);
 
+        // Panel principal
+        mainRegister = new JPanel(new BorderLayout());
+        mainRegister.add(backgroundPanel);
+        setContentPane(mainRegister);
     }
 
     private void agregarCampo(String texto, int x, int y, JPanel panel) {
