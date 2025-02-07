@@ -36,7 +36,7 @@ public class FormAdministrador extends JFrame {
     private DefaultTableModel userTableModel;
     private Color backgroundColor = new Color(102, 102, 153);
     private Firestore db;
-    private JPanel JAdmin;
+    public JPanel JAdmin;
     private JTabbedPane tabbedPane1;
     private JTextField textField1;
     private JTextField textField2;

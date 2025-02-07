@@ -6,13 +6,20 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import FireBase.AuthService;
+
 public class formLogin {
     private JTextField textcorreo;
     private JPasswordField password;
     private JButton ingresarButton;
     private JButton noCuentasConUnaButton;
     public JPanel mainLogin;
-    private JPanel mianLoginImagen;
+    private JLabel imagenLogin;
     private JFrame frame;
 
     private AuthService authService;
@@ -20,6 +27,8 @@ public class formLogin {
     public formLogin() {
         // Inicializar el servicio de autenticación
         authService = new AuthService();
+
+        // Cargar la imagen en el JLabel
 
         // Acción del botón "Ingresar"
         ingresarButton.addActionListener(new ActionListener() {
@@ -54,7 +63,7 @@ public class formLogin {
                     if (rol.equalsIgnoreCase("Administrador")) {
                         // Panel de Administrador
                         newFrame = new JFrame("Panel de Administrador");
-                        newFrame.setContentPane(new adminform().JAdmin);
+                        newFrame.setContentPane(new FormAdministrador().JAdmin);
                     } else {
                         // Panel de Usuario
                         newFrame = new JFrame("Panel de Usuario");
@@ -91,6 +100,7 @@ public class formLogin {
             }
         });
     }
+
 
     public void ventanaLogin() {
         frame = new JFrame("Login");
