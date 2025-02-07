@@ -1,40 +1,38 @@
 package FireBase;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.firestore.Firestore;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.cloud.FirestoreClient;
-import com.google.cloud.firestore.Firestore;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 
 public class FirebaseInit {
-    private static boolean initialized = false;
+    private static Firestore db;
 
     public static void initialize() {
-        if (!initialized) {
+        if (FirebaseApp.getApps().isEmpty()) {
             try {
+                // Asegúrate de que este archivo existe en src/main/resources/
                 FileInputStream serviceAccount = new FileInputStream("src/main/resources/buddytravel.json");
 
-                FirebaseOptions options = FirebaseOptions.builder()
+                FirebaseOptions options = new FirebaseOptions.Builder()
                         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                        .setDatabaseUrl("https://<TU_PROYECTO>.firebaseio.com")
+                        .setDatabaseUrl("https://tu-proyecto.firebaseio.com") // Cambia por la URL de tu Firebase
                         .build();
 
                 FirebaseApp.initializeApp(options);
-                initialized = true;
-                System.out.println("✅ Firebase inicializado correctamente.");
+                db = FirestoreClient.getFirestore();
+                System.out.println("🔥 Firebase Firestore inicializado correctamente.");
             } catch (IOException e) {
-                throw new IllegalStateException("❌ Error al inicializar Firebase: " + e.getMessage(), e);
+                System.err.println("❌ Error inicializando Firebase: " + e.getMessage());
             }
         }
     }
 
     public static Firestore getFirestore() {
-        return FirestoreClient.getFirestore();
+        return db;
     }
 }
-
-
