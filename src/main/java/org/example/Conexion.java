@@ -15,18 +15,24 @@ public class Conexion {
 
     public static void conectarFirebase() {
         try {
-            FileInputStream sa = new FileInputStream("src/main/resources/buddytravel.json");
+            if (FirebaseApp.getApps().isEmpty()) { // Evita inicializar varias veces
+                FileInputStream sa = new FileInputStream("src/main/resources/buddytravel.json");
 
-            FirebaseOptions options = FirebaseOptions.builder()
-                    .setCredentials(GoogleCredentials.fromStream(sa))
-                    .build();
+                FirebaseOptions options = FirebaseOptions.builder()
+                        .setCredentials(GoogleCredentials.fromStream(sa))
+                        .build();
 
-            FirebaseApp.initializeApp(options);
+                FirebaseApp.initializeApp(options);
+                System.out.println("✅ Firebase inicializado correctamente.");
+            } else {
+                System.out.println("⚠️ Firebase ya estaba inicializado.");
+            }
+
             db = FirestoreClient.getFirestore();
-
             System.out.println("✅ Firestore conectado correctamente.");
         } catch (IOException e) {
             System.err.println("❌ Error al conectar Firestore: " + e.getMessage());
         }
     }
+
 }
