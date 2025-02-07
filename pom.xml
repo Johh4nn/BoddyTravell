@@ -67,6 +67,12 @@
         </dependency>
     </dependencies>
 
+    <dependency>
+        <groupId>com.itextpdf</groupId>
+        <artifactId>itextpdf</artifactId>
+        <version>5.5.13.3</version>
+    </dependency>
+
     <properties>
         <!-- Usando Java 17 para estabilidad -->
         <maven.compiler.source>17</maven.compiler.source>
