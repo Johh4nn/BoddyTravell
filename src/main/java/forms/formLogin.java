@@ -1,7 +1,7 @@
 package forms;
 
-import FireBase.FirebaseInit;
-import com.google.cloud.firestore.Firestore;
+import FireBase.AuthService;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,34 +12,68 @@ public class formLogin {
     private JButton ingresarButton;
     private JButton noCuentasConUnaButton;
     public JPanel mainLogin;
+    private JPanel mianLoginImagen;
     private JFrame frame;
-    private Firestore db;
+
+    private AuthService authService;
 
     public formLogin() {
-        // Inicializar Firebase
-        FirebaseInit.initialize();
-        db = FirebaseInit.getFirestore();
+        // Inicializar el servicio de autenticación
+        authService = new AuthService();
 
         // Acción del botón "Ingresar"
         ingresarButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                // Obtener el correo y la contraseña ingresados
                 String correo = textcorreo.getText();
                 String contrasena = new String(password.getPassword());
 
-                if (autenticarUsuario(correo, contrasena)) {
+                // Autenticar al usuario
+                boolean autenticado = authService.loginUser(correo, contrasena);
+
+                if (autenticado) {
+                    // Obtener el rol del usuario desde Firestore
+                    String rol = authService.getUserRole(correo);
+
+                    System.out.println(rol);
+
+                    // Evitar problemas con valores null
+                    if (rol == null || rol.isEmpty()) {
+                        rol = "Usuario";  // Si el rol está vacío o es nulo, asignar como Usuario por defecto
+                    }
+
+                    // Mostrar mensaje de éxito
                     JOptionPane.showMessageDialog(mainLogin,
-                            "✅ Inicio de sesión exitoso.",
+                            "✅ Inicio de sesión exitoso como " + rol,
                             "Éxito",
                             JOptionPane.INFORMATION_MESSAGE);
 
-                    // Abrir solo el panel de usuario (se elimina la opción de Administrador)
-                    abrirPanelUsuario();
+                    // Determinar qué formulario abrir según el rol
+                    JFrame newFrame;
+                    if (rol.equalsIgnoreCase("Administrador")) {
+                        // Panel de Administrador
+                        newFrame = new JFrame("Panel de Administrador");
+                        newFrame.setContentPane(new adminform().JAdmin);
+                    } else {
+                        // Panel de Usuario
+                        newFrame = new JFrame("Panel de Usuario");
+                        newFrame.setContentPane(new formUser().mainPanel);
+                    }
+
+                    // Configurar y mostrar la nueva ventana
+                    newFrame.setSize(800, 600);
+                    newFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                    newFrame.setVisible(true);
+
+                    // Cerrar la ventana de login
+                    JFrame loginFrame = (JFrame) SwingUtilities.getWindowAncestor(mainLogin);
+                    if (loginFrame != null) {
+                        loginFrame.dispose();
+                    }
                 } else {
-                    JOptionPane.showMessageDialog(mainLogin,
-                            "❌ Correo o contraseña incorrectos.",
-                            "Error",
-                            JOptionPane.ERROR_MESSAGE);
+                    // Mostrar mensaje de error
+                    JOptionPane.showMessageDialog(mainLogin, "❌ Correo o contraseña incorrectos.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
@@ -48,6 +82,7 @@ public class formLogin {
         noCuentasConUnaButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                // Abrir la ventana de registro
                 JFrame registerFrame = new JFrame("Registro de Usuario");
                 registerFrame.setContentPane(new formRegister().mainRegister);
                 registerFrame.setSize(400, 300);
@@ -55,25 +90,6 @@ public class formLogin {
                 registerFrame.setVisible(true);
             }
         });
-    }
-
-    private boolean autenticarUsuario(String email, String password) {
-        // Simulación de autenticación. Reemplázalo con lógica real usando FirebaseAuth si es necesario.
-        return email.equals("usuario@example.com") && password.equals("123456");
-    }
-
-    private void abrirPanelUsuario() {
-        JFrame newFrame = new JFrame("Panel de Usuario");
-        newFrame.setContentPane(new formUser().mainPanel);
-        newFrame.setSize(800, 600);
-        newFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        newFrame.setVisible(true);
-
-        // Cerrar la ventana de login
-        JFrame loginFrame = (JFrame) SwingUtilities.getWindowAncestor(mainLogin);
-        if (loginFrame != null) {
-            loginFrame.dispose();
-        }
     }
 
     public void ventanaLogin() {
