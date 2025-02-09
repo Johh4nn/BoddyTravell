@@ -11,31 +11,24 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.google.api.core.ApiFuture;
 import FireBase.AuthService;
-import com.google.api.core.ApiFuture;
-import com.google.firebase.cloud.FirestoreClient;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.Executors;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.FontFactory;
-import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Phrase;
-import com.itextpdf.text.pdf.PdfPCell;
-import com.itextpdf.text.pdf.PdfPTable;
+
 
 public class FormAdministrador extends JFrame {
     private JTabbedPane tabbedPane;
@@ -61,6 +54,7 @@ public class FormAdministrador extends JFrame {
     private JTable tableUsuarios;
     private JTextField textField10;
     private JButton guardarButton;
+
     private JButton downloadButton;
     private JButton refreshButton;
     private JLabel nombre_usuario;
@@ -150,9 +144,128 @@ public class FormAdministrador extends JFrame {
         return panel;
     }
 
+    private void buscarPaquete(Map<String, JTextField> fields, JTable packageTable) {
+        String nombrePaquete = fields.get("Nombre del Paquete").getText().trim();
+
+        if (nombrePaquete.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Por favor ingrese el nombre del paquete a buscar",
+                    "Campo Vacío",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            ApiFuture<QuerySnapshot> future = db.collection("paquetes")
+                    .whereEqualTo("Nombre del Paquete", nombrePaquete)
+                    .get();
+
+            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+
+            if (documents.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "No se encontró ningún paquete con ese nombre",
+                        "Paquete No Encontrado",
+                        JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            // Suponemos que solo hay un paquete con ese nombre
+            QueryDocumentSnapshot document = documents.get(0);
+
+            // Llenar los campos con la información del paquete
+            fields.forEach((key, field) -> field.setText(document.getString(key)));
+
+            // Seleccionar el paquete en la tabla
+            DefaultTableModel tableModel = (DefaultTableModel) packageTable.getModel();
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                if (tableModel.getValueAt(i, 0).equals(nombrePaquete)) {
+                    packageTable.setRowSelectionInterval(i, i);
+                    packageTable.scrollRectToVisible(packageTable.getCellRect(i, 0, true));
+                    break;
+                }
+            }
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Error al buscar el paquete: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+
+    private void eliminarPaquete(JTable packageTable) {
+        int selectedRow = packageTable.getSelectedRow(); // Obtener la fila seleccionada
+
+        if (selectedRow == -1) { // Si no hay ninguna fila seleccionada
+            JOptionPane.showMessageDialog(this,
+                    "Por favor seleccione un paquete de la tabla para eliminar",
+                    "Ningún Paquete Seleccionado",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Obtener el nombre del paquete de la fila seleccionada
+        String nombrePaquete = (String) packageTable.getValueAt(selectedRow, 0);
+
+        try {
+            // Buscar el paquete en Firestore por su nombre
+            ApiFuture<QuerySnapshot> future = db.collection("paquetes")
+                    .whereEqualTo("Nombre del Paquete", nombrePaquete)
+                    .get();
+
+            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+
+            if (documents.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "No se encontró ningún paquete con ese nombre",
+                        "Paquete No Encontrado",
+                        JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            // Eliminar el documento
+            QueryDocumentSnapshot document = documents.get(0);
+            db.collection("paquetes").document(document.getId()).delete().get();
+
+            JOptionPane.showMessageDialog(this,
+                    "Paquete eliminado exitosamente",
+                    "Éxito",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            // Actualizar la tabla después de eliminar
+            cargarPaquetesEnTabla(packageTable);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Error al eliminar el paquete: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+
     private JPanel createPackagePanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
+        JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(backgroundColor);
+
+        // Crear la tabla para mostrar los paquetes
+        String[] columns = {"Nombre del Paquete", "Descripción", "Precio", "Duración", "Tipo de Viaje"};
+        DefaultTableModel tableModel = new DefaultTableModel(columns, 0);
+        JTable packageTable = new JTable(tableModel);
+
+        packageTable.setFillsViewportHeight(true);
+        packageTable.setBackground(Color.WHITE);
+        packageTable.setForeground(Color.BLACK);
+        packageTable.setGridColor(Color.LIGHT_GRAY);
+
+        JScrollPane scrollPane = new JScrollPane(packageTable);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Panel para los campos de entrada y botones
+        JPanel inputPanel = new JPanel(new GridBagLayout());
+        inputPanel.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 5, 5);
@@ -173,12 +286,12 @@ public class FormAdministrador extends JFrame {
 
             JLabel label = new JLabel(labels[i]);
             label.setForeground(Color.WHITE);
-            panel.add(label, gbc);
+            inputPanel.add(label, gbc);
 
             gbc.gridx = 1;
             JTextField field = new JTextField(20);
             fields.put(labels[i], field);
-            panel.add(field, gbc);
+            inputPanel.add(field, gbc);
         }
 
         // Panel para botones
@@ -187,31 +300,62 @@ public class FormAdministrador extends JFrame {
 
         JButton clearButton = new JButton("Limpiar");
         JButton saveButton = new JButton("Guardar Paquete");
+        JButton searchButton = new JButton("Buscar Paquete");
+        JButton deleteButton = new JButton("Eliminar Paquete");
 
         clearButton.addActionListener(e -> fields.values().forEach(field -> field.setText("")));
 
-        saveButton.addActionListener(e -> guardarPaquete(fields));
+        saveButton.addActionListener(e -> guardarPaquete(fields, packageTable));
+        searchButton.addActionListener(e -> buscarPaquete(fields, packageTable));
+        deleteButton.addActionListener(e -> eliminarPaquete(packageTable));
 
         buttonPanel.add(clearButton);
         buttonPanel.add(saveButton);
+        buttonPanel.add(searchButton);
+        buttonPanel.add(deleteButton);
 
         gbc.gridx = 0;
         gbc.gridy++;
         gbc.gridwidth = 2;
-        panel.add(buttonPanel, gbc);
+        inputPanel.add(buttonPanel, gbc);
 
-        // Envolver todo en un JScrollPane
-        JScrollPane scrollPane = new JScrollPane(panel);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        // Agregar la tabla y el panel de entrada al panel principal
+        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(inputPanel, BorderLayout.SOUTH);
 
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(backgroundColor);
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        // Cargar los paquetes en la tabla al iniciar
+        cargarPaquetesEnTabla(packageTable);
 
-        return mainPanel;
+        return panel;
     }
 
-    private void guardarPaquete(Map<String, JTextField> fields) {
+    private void cargarPaquetesEnTabla(JTable packageTable) {
+        DefaultTableModel tableModel = (DefaultTableModel) packageTable.getModel();
+        tableModel.setRowCount(0); // Limpiar la tabla antes de cargar nuevos datos
+
+        try {
+            ApiFuture<QuerySnapshot> future = db.collection("paquetes").get();
+            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+
+            for (QueryDocumentSnapshot document : documents) {
+                tableModel.addRow(new Object[]{
+                        document.getString("Nombre del Paquete"),
+                        document.getString("Descripción"),
+                        document.getString("Precio"),
+                        document.getString("Duración"),
+                        document.getString("Tipo de Viaje")
+                });
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Error al cargar los paquetes: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+
+    private void guardarPaquete(Map<String, JTextField> fields, JTable packageTable) {
         // Validación básica
         boolean camposVacios = fields.values().stream()
                 .anyMatch(field -> field.getText().trim().isEmpty());
@@ -247,6 +391,9 @@ public class FormAdministrador extends JFrame {
                         JOptionPane.INFORMATION_MESSAGE);
                 fields.values().forEach(field -> field.setText(""));
             });
+
+            // Actualizar la tabla después de guardar
+            cargarPaquetesEnTabla(packageTable);
 
         } catch (Exception ex) {
             SwingUtilities.invokeLater(() -> {
