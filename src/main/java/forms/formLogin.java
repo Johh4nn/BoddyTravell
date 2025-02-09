@@ -1,17 +1,9 @@
 package forms;
 
 import FireBase.AuthService;
-
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import FireBase.AuthService;
 
 public class formLogin {
     private JTextField textcorreo;
@@ -28,8 +20,6 @@ public class formLogin {
         // Inicializar el servicio de autenticación
         authService = new AuthService();
 
-        // Cargar la imagen en el JLabel
-
         // Acción del botón "Ingresar"
         ingresarButton.addActionListener(new ActionListener() {
             @Override
@@ -44,8 +34,6 @@ public class formLogin {
                 if (autenticado) {
                     // Obtener el rol del usuario desde Firestore
                     String rol = authService.getUserRole(correo);
-
-                    System.out.println(rol);
 
                     // Evitar problemas con valores null
                     if (rol == null || rol.isEmpty()) {
@@ -87,20 +75,26 @@ public class formLogin {
             }
         });
 
-        // Acción del botón "No cuentas con una"
+        // Acción del botón "No cuentas con una cuenta, Regístrate"
         noCuentasConUnaButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                // Obtener la ventana actual de login y cerrarla
+                JFrame loginFrame = (JFrame) SwingUtilities.getWindowAncestor(mainLogin);
+                if (loginFrame != null) {
+                    loginFrame.dispose(); // Cierra la ventana de login
+                }
+
                 // Abrir la ventana de registro
                 JFrame registerFrame = new JFrame("Registro de Usuario");
-                registerFrame.setContentPane(new formRegister().mainRegister);
-                registerFrame.setSize(400, 300);
+                formRegister registerForm = new formRegister();  // Instanciar el formulario de registro
+                registerFrame.setContentPane(registerForm.mainRegister);
+                registerFrame.setSize(800, 600);
                 registerFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 registerFrame.setVisible(true);
             }
         });
     }
-
 
     public void ventanaLogin() {
         frame = new JFrame("Login");
