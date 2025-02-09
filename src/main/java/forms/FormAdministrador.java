@@ -1,6 +1,5 @@
 package forms;
 
-import FireBase.AuthService;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.*;
 import com.google.firebase.FirebaseApp;
@@ -10,26 +9,33 @@ import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
-import com.itextpdf.text.Font;
 import com.google.api.core.ApiFuture;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-
-
-
-import com.itextpdf.text.FontFactory;
-
+import FireBase.AuthService;
+import com.google.api.core.ApiFuture;
+import com.google.firebase.cloud.FirestoreClient;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.Firestore;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.Executors;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
 
 public class FormAdministrador extends JFrame {
     private JTabbedPane tabbedPane;
@@ -50,7 +56,7 @@ public class FormAdministrador extends JFrame {
     private JPasswordField passwordField1;
     private JTextField textField9;
     private JButton button3;
-    private javax.swing.JPanel JPanel;
+    private JPanel JPanel;
     private JButton cerrarSesionButton;
     private JTable tableUsuarios;
     private JTextField textField10;
@@ -63,39 +69,44 @@ public class FormAdministrador extends JFrame {
     public FormAdministrador(String email) {
         this.emailUsuario = email;
 
+        // Inicialización básica del frame
+        setTitle("Panel de Administración");
+        setSize(1280, 720);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // Inicializar Firebase
         initializeFirestore();
+
+        // Cargar el nombre del usuario
         cargarNombreUsuario();
 
+        // Crear el panel principal
+        JAdmin = new JPanel(new BorderLayout());
 
-        cerrarSesionButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Obtener la ventana actual (formUser)
-                JFrame userFrame = (JFrame) SwingUtilities.getWindowAncestor(JAdmin);
+        // Crear el TabbedPane
+        tabbedPane1 = new JTabbedPane();
+        tabbedPane1.addTab("Inicio", createHomePanel());
+        tabbedPane1.addTab("Gestión de Paquetes", createPackagePanel());
+        tabbedPane1.addTab("Usuarios", createUsersPanel());
+        tabbedPane1.addTab("Reportes", createReportPanel());
 
-                // Obtener la posición actual antes de cerrar
-                Point currentPosition = userFrame != null ? userFrame.getLocation() : new Point(100, 100);
+        JAdmin.add(tabbedPane1, BorderLayout.CENTER);
 
-                // Cerrar la ventana actual
-                if (userFrame != null) {
-                    userFrame.dispose();
-                }
+        // Panel superior con información del usuario y botón de cerrar sesión
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(backgroundColor);
 
-                // Volver a abrir la ventana de Login en la misma posición
-                JFrame loginFrame = new JFrame("Login");
-                loginFrame.setContentPane(new formLogin().mainLogin);
-                loginFrame.setSize(1280, 720);
-                loginFrame.setLocation(currentPosition);
-                loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                loginFrame.setVisible(true);
-            }
-        });
-    }
-    // Método para cargar el nombre del usuario en el JLabel
-    private void cargarNombreUsuario() {
-        AuthService authService = new AuthService();
-        String nombre = authService.getUserName(emailUsuario); // Obtener el nombre del usuario
-        nombre_usuario.setText("  Bienvenido,   " + nombre); // Mostrar en el JLabel
+        nombre_usuario = new JLabel();
+        nombre_usuario.setForeground(Color.WHITE);
+        topPanel.add(nombre_usuario, BorderLayout.WEST);
+
+        cerrarSesionButton = new JButton("Cerrar Sesión");
+        cerrarSesionButton.addActionListener(e -> cerrarSesion());
+        topPanel.add(cerrarSesionButton, BorderLayout.EAST);
+
+        JAdmin.add(topPanel, BorderLayout.NORTH);
+
+        setContentPane(JAdmin);
     }
 
     private void initializeFirestore() {
@@ -121,17 +132,20 @@ public class FormAdministrador extends JFrame {
         }
     }
 
+    private void cargarNombreUsuario() {
+        AuthService authService = new AuthService();
+        String nombre = authService.getUserName(emailUsuario);
+        nombre_usuario.setText("  Bienvenido, " + nombre);
+    }
 
     private JPanel createHomePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(backgroundColor);
 
-        JLabel welcomeLabel = new JLabel("Bienvenido, Administrador");
+        JLabel welcomeLabel = new JLabel("Panel de Administración - BuddyTravel", SwingConstants.CENTER);
         welcomeLabel.setForeground(Color.WHITE);
-        Font font = FontFactory.getFont(FontFactory.HELVETICA, 12, Font.BOLD);
-        welcomeLabel.setHorizontalAlignment(SwingConstants.CENTER);
-
-        panel.add(welcomeLabel, BorderLayout.NORTH);
+        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA, 18, Font.BOLD);
+        panel.add(welcomeLabel, BorderLayout.CENTER);
 
         return panel;
     }
@@ -143,74 +157,172 @@ public class FormAdministrador extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 5, 5);
 
-        String[] labels = {"Nombre", "Descripción", "Precio", "Duración", "Fecha de Inicio",
-                "Fecha de Retorno", "N° Personas", "Tipo de Viaje", "Incluye", "No Incluye"};
-        JTextField[] fields = new JTextField[labels.length];
+        // Definimos los campos y sus etiquetas
+        String[] labels = {
+                "Nombre del Paquete", "Descripción", "Precio", "Duración",
+                "Fecha de Inicio", "Fecha de Retorno", "Número de Personas",
+                "Tipo de Viaje", "Incluye", "No Incluye"
+        };
 
+        Map<String, JTextField> fields = new HashMap<>();
+
+        // Creamos los campos y los agregamos al panel
         for (int i = 0; i < labels.length; i++) {
             gbc.gridx = 0;
             gbc.gridy = i;
+
             JLabel label = new JLabel(labels[i]);
             label.setForeground(Color.WHITE);
             panel.add(label, gbc);
 
             gbc.gridx = 1;
-            fields[i] = new JTextField(20);
-            panel.add(fields[i], gbc);
+            JTextField field = new JTextField(20);
+            fields.put(labels[i], field);
+            panel.add(field, gbc);
         }
 
-        JButton saveButton = new JButton("Guardar");
+        // Panel para botones
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBackground(backgroundColor);
+
+        JButton clearButton = new JButton("Limpiar");
+        JButton saveButton = new JButton("Guardar Paquete");
+
+        clearButton.addActionListener(e -> fields.values().forEach(field -> field.setText("")));
+
+        saveButton.addActionListener(e -> guardarPaquete(fields));
+
+        buttonPanel.add(clearButton);
+        buttonPanel.add(saveButton);
+
+        gbc.gridx = 0;
         gbc.gridy++;
-        gbc.gridx = 1;
-        gbc.anchor = GridBagConstraints.LINE_END;
-        panel.add(saveButton, gbc);
+        gbc.gridwidth = 2;
+        panel.add(buttonPanel, gbc);
 
-        saveButton.addActionListener(e -> {
-            if (db == null) {
+        // Envolver todo en un JScrollPane
+        JScrollPane scrollPane = new JScrollPane(panel);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBackground(backgroundColor);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+
+        return mainPanel;
+    }
+
+    private void guardarPaquete(Map<String, JTextField> fields) {
+        // Validación básica
+        boolean camposVacios = fields.values().stream()
+                .anyMatch(field -> field.getText().trim().isEmpty());
+
+        if (camposVacios) {
+            JOptionPane.showMessageDialog(this,
+                    "Por favor complete todos los campos",
+                    "Campos Incompletos",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Crear el mapa de datos
+        Map<String, Object> paqueteData = new HashMap<>();
+        fields.forEach((key, field) -> paqueteData.put(key, field.getText().trim()));
+
+        // Agregar metadata
+        paqueteData.put("fechaCreacion", com.google.cloud.Timestamp.now());
+        paqueteData.put("estado", "activo");
+
+        // Guardar en Firestore
+        try {
+            DocumentReference docRef = db.collection("paquetes").document();
+
+            // Versión síncrona más simple
+            docRef.set(paqueteData).get(); // Espera a que se complete la operación
+
+            // Mostrar mensaje de éxito
+            SwingUtilities.invokeLater(() -> {
                 JOptionPane.showMessageDialog(this,
-                        "Error: La conexión con Firestore no está inicializada",
-                        "Error de Conexión",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+                        "Paquete guardado exitosamente",
+                        "Éxito",
+                        JOptionPane.INFORMATION_MESSAGE);
+                fields.values().forEach(field -> field.setText(""));
+            });
 
-            Map<String, Object> paquete = new HashMap<>();
-            for (int i = 0; i < labels.length; i++) {
-                paquete.put(labels[i], fields[i].getText());
-            }
-
-            try {
-                db.collection("paquetes").document()
-                        .set(paquete)
-                        .get();
-
-                JOptionPane.showMessageDialog(this, "Paquete guardado exitosamente");
-                for (JTextField field : fields) {
-                    field.setText("");
-                }
-            } catch (Exception ex) {
+        } catch (Exception ex) {
+            SwingUtilities.invokeLater(() -> {
                 JOptionPane.showMessageDialog(this,
-                        "Error al guardar el paquete: " + ex.getMessage(),
+                        "Error al intentar guardar: " + ex.getMessage(),
                         "Error",
                         JOptionPane.ERROR_MESSAGE);
-                ex.printStackTrace();
-            }
-        });
+            });
+            ex.printStackTrace();
+        }
+    }
+
+    private JPanel createUsersPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(backgroundColor);
+
+        String[] columns = {"ID", "Nombre", "Email", "nombreUsuario"};
+        userTableModel = new DefaultTableModel(columns, 0);
+        userTable = new JTable(userTableModel);
+
+        userTable.setFillsViewportHeight(true);
+        userTable.setBackground(Color.WHITE);
+        userTable.setForeground(Color.BLACK);
+        userTable.setGridColor(Color.LIGHT_GRAY);
+
+        JScrollPane scrollPane = new JScrollPane(userTable);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBackground(backgroundColor);
+
+        refreshButton = new JButton("Actualizar Lista");
+        refreshButton.addActionListener(e -> actualizarListaUsuarios());
+
+        buttonPanel.add(refreshButton);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
 
         return panel;
+    }
+
+    private void actualizarListaUsuarios() {
+        try {
+            userTableModel.setRowCount(0);
+
+            ApiFuture<QuerySnapshot> future = db.collection("users").get();
+            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+
+            for (QueryDocumentSnapshot document : documents) {
+                userTableModel.addRow(new Object[]{
+                        document.getId(),
+                        document.getString("nombre"),
+                        document.getString("email"),
+                        document.getString("nombreUsuario")
+                });
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Error al cargar usuarios: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
     }
 
     private JPanel createReportPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(backgroundColor);
 
-        JLabel instructionLabel = new JLabel("Haga click para descargar el informe");
+        JLabel instructionLabel = new JLabel("Generar informe de paquetes turísticos");
         instructionLabel.setForeground(Color.WHITE);
+        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA, 18, Font.BOLD);
 
-        JButton downloadButton = new JButton("Descargar");
-        downloadButton.addActionListener(e -> {
-            generarInformePDF();
-        });
+        downloadButton = new JButton("Descargar Informe PDF");
+        downloadButton.addActionListener(e -> generarInformePDF());
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -269,7 +381,7 @@ public class FormAdministrador extends JFrame {
             Font contentFont = new Font(Font.FontFamily.HELVETICA, 10);
 
             for (QueryDocumentSnapshot doc : documents) {
-                table.addCell(new Phrase(doc.getString("Nombre"), contentFont));
+                table.addCell(new Phrase(doc.getString("Nombre del Paquete"), contentFont));
                 table.addCell(new Phrase(doc.getString("Descripción"), contentFont));
                 table.addCell(new Phrase(doc.getString("Precio"), contentFont));
                 table.addCell(new Phrase(doc.getString("Duración"), contentFont));
@@ -301,61 +413,24 @@ public class FormAdministrador extends JFrame {
         }
     }
 
-    private JPanel createUsersPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(backgroundColor);
+    private void cerrarSesion() {
+        // Obtener la ventana actual
+        JFrame userFrame = (JFrame) SwingUtilities.getWindowAncestor(JAdmin);
 
-        String[] columns = {"ID", "Nombre", "Email", "Fecha de Registro"};
-        userTableModel = new DefaultTableModel(columns, 0);
-        userTable = new JTable(userTableModel);
+        // Obtener la posición actual antes de cerrar
+        Point currentPosition = userFrame != null ? userFrame.getLocation() : new Point(100, 100);
 
-        userTable.setFillsViewportHeight(true);
-        userTable.setBackground(Color.WHITE);
-        userTable.setForeground(Color.BLACK);
-        userTable.setGridColor(Color.LIGHT_GRAY);
-
-        JScrollPane scrollPane = new JScrollPane(userTable);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        panel.add(scrollPane, BorderLayout.CENTER);
-
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.setBackground(backgroundColor);
-
-        JButton refreshButton = new JButton("Actualizar Lista");
-        refreshButton.addActionListener(e -> {
-            actualizarListaUsuarios();
-        });
-
-        buttonPanel.add(refreshButton);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-
-        return panel;
-    }
-
-    private void actualizarListaUsuarios() {
-        try {
-            userTableModel.setRowCount(0);
-
-            db.collection("usuarios").get()
-                    .get()
-                    .forEach(document -> {
-                        userTableModel.addRow(new Object[]{
-                                document.getId(),
-                                document.getString("nombre"),
-                                document.getString("email"),
-                                document.getString("fechaRegistro")
-                        });
-                    });
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                    "Error al cargar usuarios: " + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
+        // Cerrar la ventana actual
+        if (userFrame != null) {
+            userFrame.dispose();
         }
+
+        // Volver a abrir la ventana de Login en la misma posición
+        JFrame loginFrame = new JFrame("Login");
+        loginFrame.setContentPane(new formLogin().mainLogin);
+        loginFrame.setSize(1280, 720);
+        loginFrame.setLocation(currentPosition);
+        loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        loginFrame.setVisible(true);
     }
-
-
-
-        }
+}
