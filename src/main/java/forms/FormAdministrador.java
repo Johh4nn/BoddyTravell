@@ -1,5 +1,6 @@
 package forms;
 
+import FireBase.AuthService;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.*;
 import com.google.firebase.FirebaseApp;
@@ -11,6 +12,9 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.Font;
 import com.google.api.core.ApiFuture;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 
 
@@ -27,16 +31,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-import java.util.concurrent.ExecutionException;
-
 public class FormAdministrador extends JFrame {
     private JTabbedPane tabbedPane;
     private JTable userTable;
     private DefaultTableModel userTableModel;
     private Color backgroundColor = new Color(102, 102, 153);
     private Firestore db;
-    private JPanel JAdmin;
+    public JPanel JAdmin;
     private JTabbedPane tabbedPane1;
     private JTextField textField1;
     private JTextField textField2;
@@ -50,16 +51,51 @@ public class FormAdministrador extends JFrame {
     private JTextField textField9;
     private JButton button3;
     private javax.swing.JPanel JPanel;
-    private JButton button1;
+    private JButton cerrarSesionButton;
     private JTable tableUsuarios;
     private JTextField textField10;
     private JButton guardarButton;
     private JButton downloadButton;
     private JButton refreshButton;
+    private JLabel nombre_usuario;
+    private String emailUsuario;
 
-    public FormAdministrador() {
+    public FormAdministrador(String email) {
+        this.emailUsuario = email;
+
         initializeFirestore();
-        initializeUI();
+        cargarNombreUsuario();
+
+
+        cerrarSesionButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Obtener la ventana actual (formUser)
+                JFrame userFrame = (JFrame) SwingUtilities.getWindowAncestor(JAdmin);
+
+                // Obtener la posición actual antes de cerrar
+                Point currentPosition = userFrame != null ? userFrame.getLocation() : new Point(100, 100);
+
+                // Cerrar la ventana actual
+                if (userFrame != null) {
+                    userFrame.dispose();
+                }
+
+                // Volver a abrir la ventana de Login en la misma posición
+                JFrame loginFrame = new JFrame("Login");
+                loginFrame.setContentPane(new formLogin().mainLogin);
+                loginFrame.setSize(1280, 720);
+                loginFrame.setLocation(currentPosition);
+                loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                loginFrame.setVisible(true);
+            }
+        });
+    }
+    // Método para cargar el nombre del usuario en el JLabel
+    private void cargarNombreUsuario() {
+        AuthService authService = new AuthService();
+        String nombre = authService.getUserName(emailUsuario); // Obtener el nombre del usuario
+        nombre_usuario.setText("  Bienvenido,   " + nombre); // Mostrar en el JLabel
     }
 
     private void initializeFirestore() {
@@ -85,20 +121,6 @@ public class FormAdministrador extends JFrame {
         }
     }
 
-    private void initializeUI() {
-        setTitle("Panel de Administración");
-        setSize(800, 600);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-
-        tabbedPane = new JTabbedPane();
-        tabbedPane.addTab("Home", createHomePanel());
-        tabbedPane.addTab("Ingresar Paquete", createPackagePanel());
-        tabbedPane.addTab("Descargar Informe", createReportPanel());
-        tabbedPane.addTab("Lista de Usuarios", createUsersPanel());
-
-        add(tabbedPane);
-    }
 
     private JPanel createHomePanel() {
         JPanel panel = new JPanel(new BorderLayout());

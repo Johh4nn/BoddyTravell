@@ -97,6 +97,54 @@ public class AuthService {
             return "Usuario"; // Si ocurre algún error, se asigna "Usuario" por defecto
         }
     }
+    public String getUserName(String email) {
+        try {
+            // Referencia a la colección "users" en Firestore
+            CollectionReference usersRef = db.collection("users");
+
+            // Crear la consulta para buscar el usuario por su email
+            Query query = usersRef.whereEqualTo("email", email);
+
+            // Ejecutar la consulta de manera asíncrona
+            ApiFuture<QuerySnapshot> querySnapshot = query.get();
+
+            // Obtener los documentos de la consulta
+            List<QueryDocumentSnapshot> documents = querySnapshot.get().getDocuments();
+
+            // Verificar si se encontró algún documento
+            if (!documents.isEmpty()) {
+                // Tomar el primer documento encontrado
+                DocumentSnapshot document = documents.get(0);
+
+                // Depuración: mostrar los datos completos del documento
+                System.out.println("📄 Datos del documento encontrado: " + document.getData());
+
+                // Obtener el nombre del usuario
+                String nombre = document.getString("nombre");
+
+                // Depuración: mostrar el nombre obtenido
+                System.out.println("🧑‍💼 Nombre obtenido desde Firestore: " + nombre);
+
+                // Si el nombre es válido, devolverlo
+                if (nombre != null && !nombre.isEmpty()) {
+                    return nombre;
+                } else {
+                    System.out.println("⚠️ El campo 'nombre' está vacío o es nulo.");
+                }
+            } else {
+                System.out.println("⚠️ No se encontró ningún usuario con el correo: " + email);
+            }
+
+            // Si no se encuentra el usuario o el nombre, devolver "Invitado"
+            return "Invitado";
+
+        } catch (InterruptedException | ExecutionException e) {
+            // Mostrar el error si algo sale mal
+            System.err.println("❌ Error obteniendo el nombre del usuario: " + e.getMessage());
+            return "Invitado"; // Si ocurre algún error, se asigna "Invitado" por defecto
+        }
+    }
+
 
 
 }
