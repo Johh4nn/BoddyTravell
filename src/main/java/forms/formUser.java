@@ -9,8 +9,18 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.api.core.ApiFuture;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.QuerySnapshot;
+import com.google.firebase.cloud.FirestoreClient;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+
 
 public class formUser extends JFrame {
 
@@ -24,11 +34,21 @@ public class formUser extends JFrame {
     private JTable table2;
     private JLabel nombre_usuario; // Mostrar nombre del usuario
     private JPanel Buscar_paquete;
+    private JPanel Mis_Paquetes;
+    private JTable tablaMisPaquetes;
+    private JButton btnConfirmar;
+    private JButton btnEliminar;
+
+
 
     private String emailUsuario; // Almacena el email del usuario autenticado
+    private Firestore db; // Instancia de Firestore
 
     public formUser(String email) {
         this.emailUsuario = email; // Guardar el email del usuario autenticado
+
+        // Inicializar la instancia de Firestore
+        db = FirestoreClient.getFirestore(); // Esto inicializa Firestore
 
         // Configurar la tabla
         String[] columnNames = {"Atributo", "Valor"};
@@ -36,7 +56,7 @@ public class formUser extends JFrame {
         TablaHome.setModel(model);
 
         // Cargar paquetes turísticos
-        cargarPaquetes();
+        cargarPaquetesHome();
 
         // Mostrar nombre del usuario en el JLabel
         cargarNombreUsuario();
@@ -62,6 +82,13 @@ public class formUser extends JFrame {
                 if (userFrame != null) {
                     userFrame.dispose();
                 }
+                // En el constructor, justo después de initComponents() o donde se inicialicen los componentes
+                DefaultTableModel modelBusqueda = new DefaultTableModel(
+                        new Object[]{"Nombre del Paquete", "Descripción", "Precio", "Duración", "Tipo de Viaje"},
+                        0
+                );
+                table2.setModel(modelBusqueda);
+
 
                 // Volver a abrir la ventana de Login en la misma posición
                 JFrame loginFrame = new JFrame("Login");
@@ -72,60 +99,15 @@ public class formUser extends JFrame {
                 loginFrame.setVisible(true);
             }
         });
-    }
 
-    // Método para cargar el nombre del usuario en el JLabel
-    private void cargarNombreUsuario() {
-        AuthService authService = new AuthService();
-        String nombre = authService.getUserName(emailUsuario); // Obtener el nombre del usuario
-        nombre_usuario.setText("  Bienvenido,  " + nombre); // Mostrar en el JLabel
-    }
-
-    // Método para cargar los paquetes turísticos en la JTable
-    private void cargarPaquetes() {
-        UserService userService = new UserService();
-
-        try {
-            List<Map<String, Object>> paquetes = userService.obtenerPaquetes();
-
-            DefaultTableModel model = (DefaultTableModel) TablaHome.getModel();
-
-            for (Map<String, Object> paquete : paquetes) {
-                String nombre = (String) paquete.get("nombre");
-                String descripcion = (String) paquete.get("descripción");
-                double precio = (double) paquete.get("precio");
-                String duracion = (String) paquete.get("duracion");
-                String imagenURL = (String) paquete.get("imagenURL");
-
-                // Crear un ImageIcon para la imagen
-                ImageIcon imagenIcon = cargarImagen(imagenURL);
-
-                // Agregar los datos a la tabla (ahora las columnas se convierten en filas)
-                model.addRow(new Object[]{"Nombre", nombre});
-                model.addRow(new Object[]{"Descripción", descripcion});
-                model.addRow(new Object[]{"Precio", precio});
-                model.addRow(new Object[]{"Duración", duracion});
-                model.addRow(new Object[]{"Imagen", imagenIcon});
-                model.addRow(new Object[]{"", ""}); // Fila vacía para separar paquetes
+        // Acción del botón de búsqueda
+        buscarButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String searchQuery = textField1.getText().trim().toLowerCase();
+                buscarPaquete(searchQuery);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error al cargar los paquetes", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    // Método para cargar la imagen desde la URL
-    private ImageIcon cargarImagen(String imagenURL) {
-        try {
-            URL url = new URL(imagenURL); // Cargar la URL de la imagen
-            ImageIcon imagenIcon = new ImageIcon(url);
-            Image img = imagenIcon.getImage(); // Convertir a imagen
-            Image newImg = img.getScaledInstance(300, 200, Image.SCALE_SMOOTH); // Escalar la imagen más grande
-            return new ImageIcon(newImg);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null; // Retorna null si hubo un error cargando la imagen
-        }
+        });
     }
 
     // Clase personalizada para el renderizado de imágenes en la tabla
@@ -142,6 +124,113 @@ public class formUser extends JFrame {
             return this; // Devolver el JLabel con la imagen o texto
         }
     }
+
+    // Método para cargar el nombre del usuario en el JLabel
+    private void cargarNombreUsuario() {
+        AuthService authService = new AuthService();
+        String nombre = authService.getUserName(emailUsuario); // Obtener el nombre del usuario
+        nombre_usuario.setText("  Bienvenido,  " + nombre); // Mostrar en el JLabel
+    }
+
+    // Método para cargar los paquetes turísticos en la JTable (Home)
+    private void cargarPaquetesHome() {
+        DefaultTableModel tableModel = (DefaultTableModel) TablaHome.getModel();
+        tableModel.setRowCount(0); // Limpiar la tabla antes de cargar nuevos datos
+
+        try {
+            // Acceder a la colección "paquetes" en Firebase
+            ApiFuture<QuerySnapshot> future = db.collection("paquetes").get();
+            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+
+            for (QueryDocumentSnapshot document : documents) {
+                // Obtener los datos de cada paquete
+                String nombre = document.getString("Nombre del Paquete");
+                String descripcion = document.getString("Descripción");
+                String precio = document.getString("Precio");
+                String duracion = document.getString("Duración");
+                String tipoViaje = document.getString("Tipo de Viaje");
+
+                // Agregar una fila a la tabla con los datos del paquete
+                tableModel.addRow(new Object[]{
+                        nombre,
+                        descripcion,
+                        precio,
+                        duracion,
+                        tipoViaje,
+                });
+            }
+        } catch (Exception ex) {
+            // Manejar cualquier error que ocurra al cargar los paquetes
+            JOptionPane.showMessageDialog(this,
+                    "Error al cargar los paquetes: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+
+
+
+
+    // Método para buscar paquetes en Firebase
+    private void buscarPaquete(String query) {
+        DefaultTableModel tableModel = (DefaultTableModel) table2.getModel();
+        tableModel.setRowCount(0); // Limpiar la tabla antes de cargar los resultados
+
+        if (query.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Por favor ingresa un término de búsqueda.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            // Obtener todos los documentos de la colección "paquetes"
+            ApiFuture<QuerySnapshot> future = db.collection("paquetes").get();
+            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+
+            boolean found = false; // Bandera para saber si se encontró algún paquete
+
+            for (QueryDocumentSnapshot document : documents) {
+                // Obtener el campo "Nombre del Paquete"
+                String nombreField = document.getString("Nombre del Paquete");
+
+                if (nombreField == null) {
+                    System.out.println("El documento " + document.getId() + " no tiene el campo 'Nombre del Paquete'");
+                    continue;
+                }
+
+                // Comparar en minúsculas para una búsqueda insensible a mayúsculas
+                if (nombreField.toLowerCase().contains(query.toLowerCase())) {
+                    found = true;
+
+                    // Extraer los demás campos
+                    String descripcion = document.getString("Descripción");
+                    String precio = document.getString("Precio");
+                    String duracion = document.getString("Duración");
+                    String tipoViaje = document.getString("Tipo de Viaje");
+
+                    // Agregar la fila a la tabla con todos los datos
+                    tableModel.addRow(new Object[]{
+                            nombreField,
+                            descripcion,
+                            precio,
+                            duracion,
+                            tipoViaje
+                    });
+                }
+            }
+
+            if (!found) {
+                JOptionPane.showMessageDialog(this, "No se encontraron paquetes con ese nombre.", "Sin Resultados", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Error al buscar el paquete: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+
 
     // Ajuste de tamaño automático de las columnas
     private void ajustarTamañoColumnas(JTable table) {
