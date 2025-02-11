@@ -31,11 +31,11 @@ public class formUser extends JFrame {
     private JTextField textField1;
     private JButton cerrarSesionButton;
     private JButton buscarButton;
-    private JTable table2;
+    public  JTable table2;
     private JLabel nombre_usuario; // Mostrar nombre del usuario
-    private JPanel Buscar_paquete;
-    private JPanel Mis_Paquetes;
-    private JTable tablaMisPaquetes;
+    public   JPanel Buscar_paquete;
+    public   JPanel Mis_Paquetes;
+    public JTable tablaMisPaquetes;
     private JButton btnConfirmar;
     private JButton btnEliminar;
 
@@ -49,7 +49,11 @@ public class formUser extends JFrame {
 
         // Inicializar la instancia de Firestore
         db = FirestoreClient.getFirestore(); // Esto inicializa Firestore
-
+        DefaultTableModel modeloBusqueda = new DefaultTableModel(
+                new Object[]{"Nombre del Paquete", "Descripción", "Precio", "Duración", "Tipo de Viaje"},
+                0
+        );
+        table2.setModel(modeloBusqueda);
         // Configurar la tabla
         String[] columnNames = {"Atributo", "Valor"};
         DefaultTableModel model = new DefaultTableModel(columnNames, 0);
@@ -62,7 +66,7 @@ public class formUser extends JFrame {
         cargarNombreUsuario();
 
         // Establecer el renderizador para la columna "Imagen"
-        TablaHome.getColumnModel().getColumn(1).setCellRenderer(new ImageCellRenderer());
+       // TablaHome.getColumnModel().getColumn(1).setCellRenderer(new ImageCellRenderer());
 
         // Ajustar el tamaño de las columnas y filas
         ajustarTamañoColumnas(TablaHome);
@@ -83,11 +87,12 @@ public class formUser extends JFrame {
                     userFrame.dispose();
                 }
                 // En el constructor, justo después de initComponents() o donde se inicialicen los componentes
-                DefaultTableModel modelBusqueda = new DefaultTableModel(
+                DefaultTableModel modeloBusqueda = new DefaultTableModel(
                         new Object[]{"Nombre del Paquete", "Descripción", "Precio", "Duración", "Tipo de Viaje"},
                         0
                 );
-                table2.setModel(modelBusqueda);
+                table2.setModel(modeloBusqueda); // Inicializar el modelo en el constructor
+
 
 
                 // Volver a abrir la ventana de Login en la misma posición
@@ -104,8 +109,10 @@ public class formUser extends JFrame {
         buscarButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String searchQuery = textField1.getText().trim().toLowerCase();
+                String searchQuery = textField1.getText().trim();
                 buscarPaquete(searchQuery);
+
+
             }
         });
     }
@@ -174,62 +181,59 @@ public class formUser extends JFrame {
 
     // Método para buscar paquetes en Firebase
     private void buscarPaquete(String query) {
+        // Obtener el modelo de la tabla
         DefaultTableModel tableModel = (DefaultTableModel) table2.getModel();
-        tableModel.setRowCount(0); // Limpiar la tabla antes de cargar los resultados
 
+        // Limpiar las filas actuales de la tabla
+        tableModel.setRowCount(0);
+
+        // Verificar que el término de búsqueda no esté vacío
         if (query.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Por favor ingresa un término de búsqueda.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Por favor, ingresa un término de búsqueda.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         try {
-            // Obtener todos los documentos de la colección "paquetes"
+            // Realizar la consulta a Firebase
             ApiFuture<QuerySnapshot> future = db.collection("paquetes").get();
-            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+            QuerySnapshot querySnapshot = future.get();
+            List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
 
-            boolean found = false; // Bandera para saber si se encontró algún paquete
+            boolean encontrado = false; // Controlar si se encontraron resultados
 
+            // Recorrer los documentos obtenidos
             for (QueryDocumentSnapshot document : documents) {
-                // Obtener el campo "Nombre del Paquete"
-                String nombreField = document.getString("Nombre del Paquete");
+                String nombrePaquete = document.getString("Nombre del Paquete");
+                if (nombrePaquete == null) continue;
 
-                if (nombreField == null) {
-                    System.out.println("El documento " + document.getId() + " no tiene el campo 'Nombre del Paquete'");
-                    continue;
-                }
+                // Filtrar resultados por coincidencia
+                if (nombrePaquete.toLowerCase().contains(query.toLowerCase())) {
+                    encontrado = true;
 
-                // Comparar en minúsculas para una búsqueda insensible a mayúsculas
-                if (nombreField.toLowerCase().contains(query.toLowerCase())) {
-                    found = true;
-
-                    // Extraer los demás campos
-                    String descripcion = document.getString("Descripción");
-                    String precio = document.getString("Precio");
-                    String duracion = document.getString("Duración");
-                    String tipoViaje = document.getString("Tipo de Viaje");
-
-                    // Agregar la fila a la tabla con todos los datos
+                    // Agregar una fila a la tabla con los datos del paquete
                     tableModel.addRow(new Object[]{
-                            nombreField,
-                            descripcion,
-                            precio,
-                            duracion,
-                            tipoViaje
+                            nombrePaquete,
+                            document.getString("Descripción"),
+                            document.getString("Precio"),
+                            document.getString("Duración"),
+                            document.getString("Tipo de Viaje")
                     });
                 }
             }
 
-            if (!found) {
+            // Mostrar mensaje si no se encontraron resultados
+            if (!encontrado) {
                 JOptionPane.showMessageDialog(this, "No se encontraron paquetes con ese nombre.", "Sin Resultados", JOptionPane.INFORMATION_MESSAGE);
             }
+
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Error al buscar el paquete: " + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+            // Manejar errores de Firebase o del sistema
             ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error al buscar paquetes: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+
 
 
     // Ajuste de tamaño automático de las columnas
